@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Podcast Widget</title>
+  <style>
+    :root {
+      /* 🎨 BRAND COLORS – change these to match your brand */
+      --bg: #020617;
+      --card-bg: #020617;
+      --header-bg: #020617;
+      --border-subtle: #1f2937;
+      --accent: #f97316;
+      --accent-soft: rgba(249,115,22,0.12);
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --button-bg: #f97316;
+      --button-text: #111827;
+      --button-secondary-bg: #111827;
+      --button-secondary-text: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100%;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-height: 100vh;
+      background: radial-gradient(circle at top left, rgba(249,115,22,0.15), transparent 55%);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.1rem 0.75rem;
+      background: linear-gradient(135deg, var(--header-bg), #020617);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .cover {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 1px solid var(--border-subtle);
+      background: #020617;
+    }
+
+    .cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .title-block h1 {
+      font-size: 1.1rem;
+      margin: 0;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .title-block p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.7rem;
+      background: var(--accent-soft);
+      color: var(--accent);
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      margin-top: 0.2rem;
+      align-self: flex-start;
+    }
+
+    .badge-dot {
+      width: 0.4rem;
+      height: 0.4rem;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .main {
+      flex: 1;
+      padding: 0.75rem 1.1rem 1rem;
+      overflow-y: auto;
+    }
+
+    .episodes {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .episode {
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      gap: 0.75rem;
+      padding: 0.8rem;
+      border-radius: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-subtle);
+      box-shadow: 0 10px 40px rgba(15,23,42,0.55);
+    }
+
+    @media (max-width: 500px) {
+      .episode {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .thumb {
+      width: 72px;
+      height: 72px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #020617;
+      border: 1px solid #1f2937;
+      flex-shrink: 0;
+    }
+
+    .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .episode-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-width: 0;
+    }
+
+    .episode-title {
+      font-size: 0.95rem;
+      margin: 0;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    .episode-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--muted);
+      align-self: center;
+    }
+
+    .episode-description {
+      font-size: 0.82rem;
+      color: #e5e7eb;
+      max-height: 3.2em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .player {
+      margin-top: 0.35rem;
+    }
+
+    audio {
+      width: 100%;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.4rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 0.35rem 0.7rem;
+      font-size: 0.75rem;
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--button-bg);
+      color: var(--button-text);
+      font-weight: 600;
+    }
+
+    .btn-secondary {
+      background: var(--button-secondary-bg);
+      color: var(--button-secondary-text);
+    }
+
+    .status,
+    .error {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.6rem;
+      padding: 0 0.1rem;
+    }
+
+    .error {
+      color: #fecaca;
+    }
+
+    .skeleton {
+      opacity: 0.65;
+      animation: pulse 1.3s ease-in-out infinite;
+    }
+
+    .skeleton-block {
+      border-radius: 999px;
+      background: #111827;
+      height: 0.7rem;
+      margin-bottom: 0.35rem;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.45; }
+      50% { opacity: 0.9; }
+      100% { opacity: 0.45; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="cover" id="cover">
+        <!-- cover art injected here -->
+      </div>
+      <div class="title-block">
+        <h1 id="feedTitle">Podcast</h1>
+        <p id="feedSubtitle">Latest episodes, auto-updating</p>
+        <div class="badge">
+          <span class="badge-dot"></span>
+          <span id="episodeCount">Loading…</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div id="episodes" class="episodes"></div>
+      <div id="status" class="status">Loading episodes…</div>
+      <div id="error" class="error" style="display:none;"></div>
+    </main>
+  </div>
+
+  <script>
+    const FEED_URL = "https://anchor.fm/s/109ccf36c/podcast/rss";
+    const API_URL = "https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(FEED_URL);
+    const CACHE_KEY = "podcastFeedCache_v1_" + FEED_URL;
+
+    const episodesContainer = document.getElementById("episodes");
+    const statusEl = document.getElementById("status");
+    const errorEl = document.getElementById("error");
+    const coverEl = document.getElementById("cover");
+    const titleEl = document.getElementById("feedTitle");
+    const subtitleEl = document.getElementById("feedSubtitle");
+    const countEl = document.getElementById("episodeCount");
+
+    function skeletonCard() {
+      const card = document.createElement("article");
+      card.className = "episode skeleton";
+      card.innerHTML = `
+        <div class="thumb"></div>
+        <div class="episode-body">
+          <div class="skeleton-block" style="width:70%;"></div>
+          <div class="skeleton-block" style="width:50%;"></div>
+          <div class="skeleton-block" style="width:90%; height:0.55rem;"></div>
+          <div class="skeleton-block" style="width:80%; height:0.55rem;"></div>
+        </div>
+      `;
+      return card;
+    }
+
+    function showSkeletons(count = 3) {
+      episodesContainer.innerHTML = "";
+      for (let i = 0; i < count; i++) {
+        episodesContainer.appendChild(skeletonCard());
+      }
+    }
+
+    function formatDate(dateString) {
+      const d = new Date(dateString);
+      if (isNaN(d)) return "";
+      return d.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    }
+
+    function stripHtml(html) {
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html || "";
+      return (tmp.textContent || tmp.innerText || "").trim();
+    }
+
+    function updateHeaderFromFeed(feed, items) {
+      if (feed && feed.title) {
+        titleEl.textContent = feed.title;
+      }
+      if (feed && feed.description) {
+        subtitleEl.textContent = stripHtml(feed.description).slice(0, 90) || "Latest episodes, auto-updating";
+      }
+
+      const imgUrl =
+        (feed && (feed.image || feed.itunes_image)) ||
+        (items && items[0] && items[0].thumbnail) ||
+        null;
+
+      if (imgUrl) {
+        coverEl.innerHTML = '<img src="' + imgUrl + '" alt="Podcast cover" loading="lazy" />';
+      } else {
+        coverEl.innerHTML = "";
+      }
+
+      if (Array.isArray(items)) {
+        countEl.textContent = items.length + " episodes";
+      } else {
+        countEl.textContent = "Episodes";
+      }
+    }
+
+    function renderEpisodes(feedData) {
+      const items = feedData.items || [];
+      episodesContainer.innerHTML = "";
+
+      if (!items.length) {
+        statusEl.textContent = "No episodes found yet.";
+        return;
+      }
+
+      updateHeaderFromFeed(feedData.feed || {}, items);
+      statusEl.textContent = "";
+
+      items.forEach(function (item) {
+        const card = document.createElement("article");
+        card.className = "episode";
+
+        const thumbUrl = item.thumbnail || (feedData.feed && (feedData.feed.image || feedData.feed.itunes_image));
+
+        const thumb = document.createElement("div");
+        thumb.className = "thumb";
+        if (thumbUrl) {
+          thumb.innerHTML = '<img src="' + thumbUrl + '" alt="Episode artwork" loading="lazy" />';
+        }
+
+        const body = document.createElement("div");
+        body.className = "episode-body";
+
+        const title = document.createElement("h2");
+        title.className = "episode-title";
+        title.textContent = item.title || "Untitled episode";
+
+        const meta = document.createElement("div");
+        meta.className = "episode-meta";
+        const date = formatDate(item.pubDate);
+        const duration = item.itunes_duration || "";
+        if (date) meta.appendChild(document.createTextNode(date));
+        if (date && duration) {
+          const dot = document.createElement("span");
+          dot.className = "dot";
+          meta.appendChild(dot);
+        }
+        if (duration) meta.appendChild(document.createTextNode(duration));
+
+        const desc = document.createElement("p");
+        desc.className = "episode-description";
+        const fullDesc = stripHtml(item.description || item.content || "");
+        desc.textContent = fullDesc.length > 220 ? fullDesc.slice(0, 217) + "…" : fullDesc;
+
+        const playerWrap = document.createElement("div");
+        playerWrap.className = "player";
+        const audioSrc =
+          (item.enclosure && (item.enclosure.link || item.enclosure.url)) ||
+          item.link ||
+          "";
+        if (audioSrc) {
+          const audio = document.createElement("audio");
+          audio.controls = true;
+          audio.preload = "none";
+          audio.src = audioSrc;
+          playerWrap.appendChild(audio);
+        }
+
+        const actions = document.createElement("div");
+        actions.className = "actions";
+
+        if (audioSrc) {
+          const listenBtn = document.createElement("button");
+          listenBtn.className = "btn btn-primary";
+          listenBtn.textContent = "Play episode";
+          listenBtn.type = "button";
+          listenBtn.addEventListener("click", function () {
+            const allAudios = document.querySelectorAll("audio");
+            allAudios.forEach(function (el) {
+              if (el !== playerWrap.querySelector("audio")) {
+                el.pause();
+              }
+            });
+            const audio = playerWrap.querySelector("audio");
+            if (audio) {
+              audio.play();
+              audio.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+          });
+          actions.appendChild(listenBtn);
+        }
+
+        const detailsUrl = item.link || audioSrc || "#";
+        if (detailsUrl && detailsUrl !== "#") {
+          const details = document.createElement("a");
+          details.className = "btn btn-secondary";
+          details.href = detailsUrl;
+          details.target = "_blank";
+          details.rel = "noopener noreferrer";
+          details.textContent = "Show details";
+          actions.appendChild(details);
+        }
+
+        body.appendChild(title);
+        body.appendChild(meta);
+        body.appendChild(desc);
+        body.appendChild(playerWrap);
+        body.appendChild(actions);
+
+        card.appendChild(thumb);
+        card.appendChild(body);
+
+        episodesContainer.appendChild(card);
+      });
+    }
+
+    function saveCache(data) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          savedAt: Date.now(),
+          data: data
+        }));
+      } catch (e) {
+        // ignore quota / private mode errors
+      }
+    }
+
+    function loadCache(maxAgeMs) {
+      try {
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.data) return null;
+        if (maxAgeMs && Date.now() - parsed.savedAt > maxAgeMs) return null;
+        return parsed.data;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function fetchWithTimeout(resource, options) {
+      const { timeout = 8000 } = options || {};
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+      try {
+        const response = await fetch(resource, { ...options, signal: controller.signal });
+        clearTimeout(id);
+        return response;
+      } catch (e) {
+        clearTimeout(id);
+        throw e;
+      }
+    }
+
+    async function loadFeed() {
+      const cached = loadCache(6 * 60 * 60 * 1000);
+      if (cached && cached.items && cached.items.length) {
+        renderEpisodes(cached);
+        statusEl.textContent = "Loaded from cache, refreshing…";
+      } else {
+        showSkeletons();
+      }
+
+      try {
+        const res = await fetchWithTimeout(API_URL, { timeout: 8000 });
+        if (!res.ok) throw new Error("Network error: " + res.status);
+        const data = await res.json();
+        if (data.status !== "ok") {
+          throw new Error(data.message || "Feed error");
+        }
+
+        saveCache(data);
+        renderEpisodes(data);
+        statusEl.textContent = "Updated just now.";
+        errorEl.style.display = "none";
+      } catch (err) {
+        console.error(err);
+        const existing = cached && cached.items && cached.items.length;
+        if (existing) {
+          statusEl.textContent = "Showing cached episodes (live update failed).";
+        } else {
+          statusEl.textContent = "";
+          errorEl.style.display = "block";
+          errorEl.textContent = "Sorry, we couldn't load the podcast feed. Please try again later.";
+        }
+      }
+    }
+
+    loadFeed();
+  </script>
+</body>
+</html>
